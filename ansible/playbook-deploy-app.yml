@@ -1,0 +1,36 @@
+---
+- name: Deploy Application to Kubernetes
+  hosts: all
+  tasks:
+    - name: Create destination directory for k8s manifests
+      file:
+        path: /home/{{ ansible_user | default(lookup('env', 'USER')) }}/k8s-manifests
+        state: directory
+        mode: '0755'
+
+    - name: Copy Kubernetes manifests
+      copy:
+        src: "../k8s/{{ item }}"
+        dest: "/home/{{ ansible_user | default(lookup('env', 'USER')) }}/k8s-manifests/{{ item }}"
+      loop:
+        - deployment.yaml
+        - service.yaml
+
+    - name: Apply Kubernetes manifests
+      command: kubectl apply -f /home/{{ ansible_user | default(lookup('env', 'USER')) }}/k8s-manifests/
+      register: kubectl_apply
+      changed_when: "'created' in kubectl_apply.stdout or 'configured' in kubectl_apply.stdout"
+
+    - name: Wait for rollout to complete
+      command: kubectl rollout status deployment/weather-ml-app
+      changed_when: false
+
+    - name: Display Service Info
+      command: kubectl get service weather-ml-app-service
+      register: service_info
+      changed_when: false
+
+    - name: Print Service Info
+      debug:
+        var: service_info.stdout_lines
+
