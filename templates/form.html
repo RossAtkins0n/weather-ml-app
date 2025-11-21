@@ -1,27 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather Classification Input</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Weather Classification:</h1>
-    <p><strong> Enter measurements below<strong><p>
+    <div class="container">
+        <h1>Weather Classification</h1>
+        <p class="subtitle">Enter measurements below</p>
 
-    {% if error %}
-    <p style="color:red;">{{ error }}</p>
-    {% endif %}
+        {% if error %}
+        <div class="error-message">{{ error }}</div>
+        {% endif %}
 
-    <form method="POST" action="/">
-        <label>Temperature (F): <input type="number" step="any" name="temperature" required></label><br>
-        <label>Pressure: <input type="number" step="any" name="pressure" required></label><br>
-        <label>Humidity: <input type="number" step="any" name="humidity" required></label><br>
-        <label>Wind Speed: <input type="number" step="any" name="wind_speed" required></label><br>
-        <label>Wind Degree: <input type="number" step="any" name="wind_deg" required></label><br>
-        <label>Rain 1h: <input type="number" step="any" name="rain_1h"></label><br>
-        <label>Rain 3h: <input type="number" step="any" name="rain_3h"></label><br>
-        <label>Snow: <input type="number" step="any" name="snow"></label><br>
-        <label>Clouds: <input type="number" step="any" name="clouds"></label><br><br>
-        <button type="submit">Predict</button>
-    </form>
+        <form method="POST" action="/">
+            <div class="form-group">
+                <label for="temperature">Temperature (F)</label>
+                <input type="number" step="any" id="temperature" name="temperature" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="pressure">Pressure</label>
+                <input type="number" step="any" id="pressure" name="pressure" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="humidity">Humidity</label>
+                <input type="number" step="any" id="humidity" name="humidity" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="wind_speed">Wind Speed</label>
+                <input type="number" step="any" id="wind_speed" name="wind_speed" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="wind_deg">Wind Degree</label>
+                <input type="number" step="any" id="wind_deg" name="wind_deg" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="rain_1h">Rain 1h</label>
+                <input type="number" step="any" id="rain_1h" name="rain_1h">
+            </div>
+            
+            <div class="form-group">
+                <label for="rain_3h">Rain 3h</label>
+                <input type="number" step="any" id="rain_3h" name="rain_3h">
+            </div>
+            
+            <div class="form-group">
+                <label for="snow">Snow</label>
+                <input type="number" step="any" id="snow" name="snow">
+            </div>
+            
+            <div class="form-group">
+                <label for="clouds">Clouds</label>
+                <input type="number" step="any" id="clouds" name="clouds">
+            </div>
+            
+            <button type="submit">Predict</button>
+        </form>
+    </div>
 </body>
 </html>

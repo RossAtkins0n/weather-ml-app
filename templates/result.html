@@ -1,13 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prediction Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Prediction Result</h1>
-    <p><strong>The weather is:</strong> {{ prediction }}</p>
-    <p><strong>Prediction time:</strong> {{ latency }} ms</p>
-    <p><strong> Thank you for using Weather Classifier!<strong><p>
-    <a href="/">Make another prediction</a>
+    <div class="container">
+        <h1>Prediction Result</h1>
+        
+        <div class="result-card">
+            <div class="result-title">The weather is:</div>
+            <div class="result-value">{{ prediction }}</div>
+            <div class="result-meta">Prediction time: {{ latency }} ms</div>
+        </div>
+        
+        <p class="subtitle">Thank you for using Weather Classifier!</p>
+        
+        <a href="/">Make another prediction</a>
+    </div>
 </body>
 </html>

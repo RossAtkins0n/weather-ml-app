@@ -2,6 +2,7 @@ from flask import Flask, request, render_template
 import pickle
 import numpy as np
 import time
+import sklearn  # Required for unpickling scikit-learn models
 
 app = Flask(__name__)
 
@@ -61,9 +62,9 @@ def home():
 
             # Show results
             return render_template(
-                'form.html',
+                'result.html',
                 prediction=prediction,
-                time=latency
+                latency=latency
             )
 
         except Exception as e:
