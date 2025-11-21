@@ -5,54 +5,78 @@ import time
 
 app = Flask(__name__)
 
-weather_classes = ['clear', 'cloudy', 'drizzly', 'foggy', 'hazey', 'misty', 'rainy', 'smokey', 'thunderstorm']
+# List of valid weather classes
+weather_classes = [
+    'clear', 'cloudy', 'drizzly', 'foggy', 'hazey',
+    'misty', 'rainy', 'smokey', 'thunderstorm'
+]
 
-def load_model(model_path = 'model/model.pkl'):
-	return pickle.load(open(model_path, 'rb'))
+# -----------------------------
+# Load Model
+# -----------------------------
+def load_model(model_path='model/model.pkl'):
+    return pickle.load(open(model_path, 'rb'))
 
+# -----------------------------
+# Prediction Function
+# -----------------------------
 def classify_weather(features):
-	model = load_model()
-	start = time.time()
-	prediction_index = model.predict(features)[0]
-	latency = round((time.time() - start) * 1000, 2) #we are here
-	prediction = weather_classes[1]
-	
-	return prediction, latency
+    model = load_model()
+    start_time = time.time()
 
+    # Predict class
+    prediction_index = model.predict(features)[0]
+    prediction = weather_classes[prediction_index]
 
+    # Calculate latency (ms)
+    latency = round((time.time() - start_time) * 1000, 2)
+
+    return prediction, latency
+
+# -----------------------------
+# MAIN ROUTE
+# -----------------------------
 @app.route('/', methods=['GET', 'POST'])
 def home():
-	if request.method == 'POST':
-		try:
-			# Extract floats from form data
-			temperature = request.form['temperature']
-			pressure = request.form['pressure']
-			humidity = request.form['humidity']
-			wind_speed = request.form['wind_speed']
-			wind_deg = request.form['wind_deg']
-			rain_1h = float(request.form.get('rain_1h', 0) or 0)
-			rain_3h = float(request.form.get('rain_3h', 0) or 0)
-			snow = float(request.form.get('snow', 0) or 0)
-			clouds = float(request.form.get('clouds', 0) or 0)
+    if request.method == 'POST':
+        try:
+            # Safely extract & convert input values
+            features = [
+                float(request.form.get('temperature', 0)),
+                float(request.form.get('pressure', 0)),
+                float(request.form.get('humidity', 0)),
+                float(request.form.get('wind_speed', 0)),
+                float(request.form.get('wind_deg', 0)),
+                float(request.form.get('rain_1h', 0)),
+                float(request.form.get('rain_3h', 0)),
+                float(request.form.get('snow', 0)),
+                float(request.form.get('clouds', 0)),
+            ]
 
-			features = np.array([
-				temperature, pressure, humidity,
-				wind_speed, wind_deg, rain_1h,
-				rain_3h, snow, clouds
-			]).reshape(1, -1)
+            # Prepare for model input
+            features = np.array(features).reshape(1, -1)
 
-			
-			prediction, latency = classify_weather(features)
+            # Run model
+            prediction, latency = classify_weather(features)
 
+            # Show results
+            return render_template(
+                'form.html',
+                prediction=prediction,
+                time=latency
+            )
 
-			return render_template('result.html', prediction=prediction, latency=latency)
+        except Exception as e:
+            # Graceful failure for DevOps logging
+            error_msg = f"Error processing input: {e}"
+            return render_template('form.html', error=error_msg), 200
 
-		except Exception as e:
-			error_msg = f"Error processing input: {e}"
-			return render_template('form.html', error=error_msg)
-	# GET method: show the input form
-	return render_template('form.html')
+    # If GET request → show form
+    return render_template('form.html')
 
-
+# -----------------------------
+# Run Flask (if local)
+# -----------------------------
 if __name__ == '__main__':
-	app.run(host="0.0.0.0", port=5000)
+    app.run(host='0.0.0.0', port=5000)
+
