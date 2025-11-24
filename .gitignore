@@ -22,3 +22,7 @@ Thumbs.db
 # Model files (if large)
 # model/*.pkl
 
+# Kubernetes config (contains sensitive credentials)
+kubeconfig.yml
+*.kubeconfig
+
