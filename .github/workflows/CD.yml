@@ -16,7 +16,10 @@ jobs:
 
     env:
       IMAGE_NAME: 13mj/weather-ml-app
-      HAS_KUBE_CONFIG: ${{ secrets.KUBE_CONFIG_DATA != '' }} 
+      HAS_GCP_SA: ${{ secrets.GCP_SA_KEY != '' }}
+      GCP_PROJECT_ID: weather-ml-app-479520
+      GCP_CLUSTER_NAME: weather-cluster
+      GCP_REGION: europe-west1 
 
     steps:
       - name: Checkout repository
@@ -49,61 +52,59 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-#config kubectl (only if KUBE_CONFIG_DATA secret is set)
+#config kubectl (only if GCP_SA_KEY secret is set)
+      - name: Authenticate to Google Cloud
+        if: env.HAS_GCP_SA == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        if: env.HAS_GCP_SA == 'true'
+        uses: google-github-actions/setup-gcloud@v2
+      
       - name: Install kubectl
-        if: env.HAS_KUBE_CONFIG == 'true'
+        if: env.HAS_GCP_SA == 'true'
         run: |
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/
       
-      - name: Set up kubectl
-        if: env.HAS_KUBE_CONFIG == 'true'
+      - name: Get GKE credentials
+        if: env.HAS_GCP_SA == 'true'
         run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-          # Verify the config file is valid YAML
-          if ! kubectl config view --raw &>/dev/null; then
-            echo "Error: Invalid kubeconfig file"
-            echo "First 200 characters of decoded config:"
-            head -c 200 $HOME/.kube/config
-            exit 1
-          fi
-          echo "Kubeconfig file created and validated successfully"
+          gcloud container clusters get-credentials ${{ env.GCP_CLUSTER_NAME }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }}
       
       - name: Verify Kubernetes cluster connection
-        if: env.HAS_KUBE_CONFIG == 'true'
+        if: env.HAS_GCP_SA == 'true'
         run: |
-          if ! kubectl cluster-info &>/dev/null; then
-            echo "Warning: Could not connect to cluster, but continuing..."
-          else
-            echo "Successfully connected to cluster:"
-            kubectl cluster-info
-          fi
+          kubectl cluster-info
+          kubectl get nodes
 
-#apply k8s manifests (only if KUBE_CONFIG_DATA is set)
+#apply k8s manifests (only if GCP_SA_KEY is set)
       - name: Apply Kubernetes manifests
-        if: env.HAS_KUBE_CONFIG == 'true'
+        if: env.HAS_GCP_SA == 'true'
         run: |
           kubectl apply -f k8s/ --validate=false
 
-#update deployment image and wait for rolling update (only if KUBE_CONFIG_DATA is set)
+#update deployment image and wait for rolling update (only if GCP_SA_KEY is set)
       - name: Update deployment image
-        if: env.HAS_KUBE_CONFIG == 'true'
+        if: env.HAS_GCP_SA == 'true'
         run: |
           kubectl set image deployment/weather-ml-app \
             weather-ml-app=${{ env.IMAGE_NAME }}:${{ github.sha }} \
             --record
 
       - name: Wait for rollout to complete
-        if: env.HAS_KUBE_CONFIG == 'true'
+        if: env.HAS_GCP_SA == 'true'
         run: |
           kubectl rollout status deployment/weather-ml-app --timeout=180s
       
       - name: Kubernetes deployment skipped
-        if: env.HAS_KUBE_CONFIG != 'true'
+        if: env.HAS_GCP_SA != 'true'
         run: |
-          echo "Kubernetes deployment skipped - KUBE_CONFIG_DATA secret not set"
+          echo "Kubernetes deployment skipped - GCP_SA_KEY secret not set"
           echo "Docker image built and pushed successfully: ${{ env.IMAGE_NAME }}"
-          echo "To enable Kubernetes deployment, add KUBE_CONFIG_DATA secret to your repository"
+          echo "To enable Kubernetes deployment, add GCP_SA_KEY secret to your repository"
