@@ -27,6 +27,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Verify DockerHub login
+        run: |
+          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "Error: DOCKERHUB_USERNAME or DOCKERHUB_TOKEN secrets are not set"
+            exit 1
+          fi
+          echo "Logged in as: ${{ secrets.DOCKERHUB_USERNAME }}"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
