@@ -108,10 +108,3 @@ jobs:
         if: env.HAS_GCP_SA == 'true'
         run: |
           kubectl rollout status deployment/weather-ml-app --timeout=180s
-      
-      - name: Kubernetes deployment skipped
-        if: env.HAS_GCP_SA != 'true'
-        run: |
-          echo "Kubernetes deployment skipped - GCP_SA_KEY secret not set"
-          echo "Docker image built and pushed successfully: ${{ env.IMAGE_NAME }}"
-          echo "To enable Kubernetes deployment, add GCP_SA_KEY secret to your repository"
