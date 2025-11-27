@@ -28,15 +28,15 @@ jobs:
   
       - name: Run unit tests
         run: |
-          python -m unittest unit_test.py
+          python -m unittest unit_test
 
       - name: Run integration tests
         run: |
-          python -m unittest integration_test.py
+          python -m unittest integration_test
 
       - name: Run smoke tests
         run: |
-          python -m unittest smoke_test.py
+          python -m unittest smoke_test
 
 #docker build
       - name: Set up Docker Buildx
@@ -50,5 +50,11 @@ jobs:
         run: |
           docker run -d --rm --name weather-ml-app-test -p 5000:5000 weather-ml-app:test
           sleep 10
-          docker ps | grep weather-ml-app-test
-          docker stop weather-ml-app-test
+          if docker ps | grep -q weather-ml-app-test; then
+            echo "Container is running successfully"
+            docker stop weather-ml-app-test
+          else
+            echo "Container failed to start"
+            docker ps -a
+            exit 1
+          fi

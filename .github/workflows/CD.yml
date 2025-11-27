@@ -12,10 +12,10 @@ on:
 jobs:
   push-and-deploy:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) }}
 
     env:
-      IMAGE_NAME: kiritsumi/weather-ml-app 
+      IMAGE_NAME: mj13/weather-ml-app 
 
     steps:
       - name: Checkout repository
@@ -41,6 +41,12 @@ jobs:
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
 #config kubectl
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+      
       - name: Set up kubectl
         run: |
           mkdir -p $HOME/.kube
