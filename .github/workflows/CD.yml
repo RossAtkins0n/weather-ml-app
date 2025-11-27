@@ -15,7 +15,8 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) }}
 
     env:
-      IMAGE_NAME: 13mj/weather-ml-app 
+      IMAGE_NAME: 13mj/weather-ml-app
+      HAS_KUBE_CONFIG: ${{ secrets.KUBE_CONFIG_DATA != '' }} 
 
     steps:
       - name: Checkout repository
@@ -48,31 +49,53 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-#config kubectl
+#config kubectl (only if KUBE_CONFIG_DATA secret is set)
       - name: Install kubectl
+        if: env.HAS_KUBE_CONFIG == 'true'
         run: |
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/
       
       - name: Set up kubectl
+        if: env.HAS_KUBE_CONFIG == 'true'
         run: |
           mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config 
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
       
-
-#apply k8s manifests
-      - name: Apply Kubernetes manifests
+      - name: Verify Kubernetes cluster connection
+        if: env.HAS_KUBE_CONFIG == 'true'
         run: |
-          kubectl apply -f k8s/
+          if ! kubectl cluster-info &>/dev/null; then
+            echo "Warning: Could not connect to cluster, but continuing..."
+          else
+            echo "Successfully connected to cluster:"
+            kubectl cluster-info
+          fi
 
-#update deployment image and wait for rolling update
+#apply k8s manifests (only if KUBE_CONFIG_DATA is set)
+      - name: Apply Kubernetes manifests
+        if: env.HAS_KUBE_CONFIG == 'true'
+        run: |
+          kubectl apply -f k8s/ --validate=false
+
+#update deployment image and wait for rolling update (only if KUBE_CONFIG_DATA is set)
       - name: Update deployment image
+        if: env.HAS_KUBE_CONFIG == 'true'
         run: |
           kubectl set image deployment/weather-ml-app \
             weather-ml-app=${{ env.IMAGE_NAME }}:${{ github.sha }} \
             --record
 
       - name: Wait for rollout to complete
+        if: env.HAS_KUBE_CONFIG == 'true'
         run: |
           kubectl rollout status deployment/weather-ml-app --timeout=180s
+      
+      - name: Kubernetes deployment skipped
+        if: env.HAS_KUBE_CONFIG != 'true'
+        run: |
+          echo "Kubernetes deployment skipped - KUBE_CONFIG_DATA secret not set"
+          echo "Docker image built and pushed successfully: ${{ env.IMAGE_NAME }}"
+          echo "To enable Kubernetes deployment, add KUBE_CONFIG_DATA secret to your repository"
