@@ -30,10 +30,11 @@ class TestModelAppIntegration(unittest.TestCase):
         # 2) Decode HTML so we can search it
         html_text = response.data.decode('utf-8').lower()
 
-        # 3) Make sure we got the main page with the form + heading
-        #    This proves the Flask route, template and form are wired together.
-        self.assertIn("weather classification", html_text)
-        self.assertIn("<form", html_text)
+        # 3) Make sure we got the result page with prediction
+        
+        self.assertIn("prediction result", html_text)
+        self.assertIn("the weather is:", html_text)
+        self.assertIn("weather classifier", html_text)
 
 
 if __name__ == '__main__':
