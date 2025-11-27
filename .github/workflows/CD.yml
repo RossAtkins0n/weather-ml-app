@@ -61,8 +61,16 @@ jobs:
         if: env.HAS_KUBE_CONFIG == 'true'
         run: |
           mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
+          # Verify the config file is valid YAML
+          if ! kubectl config view --raw &>/dev/null; then
+            echo "Error: Invalid kubeconfig file"
+            echo "First 200 characters of decoded config:"
+            head -c 200 $HOME/.kube/config
+            exit 1
+          fi
+          echo "Kubeconfig file created and validated successfully"
       
       - name: Verify Kubernetes cluster connection
         if: env.HAS_KUBE_CONFIG == 'true'
