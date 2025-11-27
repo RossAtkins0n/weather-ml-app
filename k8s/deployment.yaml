@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: weather-ml-app
-        image: 13mj/weather-ml-app:latest
+        image: kiritsumi/weather-ml-app:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
