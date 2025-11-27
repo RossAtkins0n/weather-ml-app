@@ -16,7 +16,8 @@ weather_classes = [
 # Load Model
 # -----------------------------
 def load_model(model_path='model/model.pkl'):
-    return pickle.load(open(model_path, 'rb'))
+    with open(model_path, 'rb') as f:
+        return pickle.load(f)
 
 # -----------------------------
 # Prediction Function
@@ -41,17 +42,29 @@ def classify_weather(features):
 def home():
     if request.method == 'POST':
         try:
+            # Define required fields
+            required_fields = [
+                'temperature', 'pressure', 'humidity', 'wind_speed',
+                'wind_deg', 'rain_1h', 'rain_3h', 'snow', 'clouds'
+            ]
+            
+            # Check if all required fields are present
+            missing_fields = [field for field in required_fields if field not in request.form]
+            if missing_fields:
+                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                return render_template('form.html', error=error_msg), 200
+            
             # Safely extract & convert input values
             features = [
-                float(request.form.get('temperature', 0)),
-                float(request.form.get('pressure', 0)),
-                float(request.form.get('humidity', 0)),
-                float(request.form.get('wind_speed', 0)),
-                float(request.form.get('wind_deg', 0)),
-                float(request.form.get('rain_1h', 0)),
-                float(request.form.get('rain_3h', 0)),
-                float(request.form.get('snow', 0)),
-                float(request.form.get('clouds', 0)),
+                float(request.form.get('temperature')),
+                float(request.form.get('pressure')),
+                float(request.form.get('humidity')),
+                float(request.form.get('wind_speed')),
+                float(request.form.get('wind_deg')),
+                float(request.form.get('rain_1h')),
+                float(request.form.get('rain_3h')),
+                float(request.form.get('snow')),
+                float(request.form.get('clouds')),
             ]
 
             # Prepare for model input
