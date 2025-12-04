@@ -9,7 +9,7 @@ app = Flask(__name__)
 # List of valid weather classes
 weather_classes = [
     'clear', 'cloudy', 'drizzly', 'foggy', 'hazey',
-    'misty', 'rainy', 'smokey', 'thunderstorm'
+    'misty', 'rain', 'smokey', 'thunderstorm'
 ]
 
 # -----------------------------
